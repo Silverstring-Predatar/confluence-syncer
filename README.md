@@ -8,7 +8,7 @@ This Action copies the contents of a Markdown `.md` file or folder to a Confluen
       - uses: humanendpoint/confluence-sync@v1.1
         with:
           input_md_directory: wiki
-          exclude_files: Home.md,_Sidebar.md
+          exclude_files: this.md,that.md
           cloud: company
           space_id: ${{ secrets.CONFLUENCE_SPACE_ID }}
           parent_page_id: ${{ secrets.JIRA_SCRIPTS_PARENT_PAGE_ID }}
