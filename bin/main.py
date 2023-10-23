@@ -12,6 +12,7 @@ import requests
 from markdown_it import MarkdownIt
 from requests.exceptions import RequestException
 
+
 def load_environment_variables():
     """
     Load environment variables and check for required values.
@@ -42,22 +43,31 @@ def load_environment_variables():
 
 
 def read_markdown_file(md_file):
-    with open(md_file, encoding='utf-8') as f:
+    """
+    Read a markdown file.
+    """
+    with open(md_file, encoding="utf-8") as f:
         return f.read()
 
 
 def render_html(md_content):
+    """
+    Render the page so Confluence understands it
+    """
     markdown = MarkdownIt()
     return markdown.render(md_content)
 
 
 def get_page_title(md_file):
+    """
+    Extract the page title from the Markdown file title
+    """
     return os.path.splitext(os.path.basename(md_file))[0]
 
 
 def process_directory(envs, links):
     """
-    Process a directory of markdown files.
+    Process a directory of markdown files
     """
     md_directory = os.path.join(
         os.environ["GITHUB_WORKSPACE"], envs["input_md_directory"]
@@ -77,6 +87,9 @@ def process_directory(envs, links):
 
 
 def update_confluence_page(envs, page_id, page_title, html, new_version, links):
+    """
+    Update a Confluence page
+    """
     update_url = f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages/{page_id}"
     headers = {"Content-Type": "application/json"}
     update_content = {
@@ -94,7 +107,7 @@ def update_confluence_page(envs, page_id, page_title, html, new_version, links):
         headers=headers,
         timeout=10,
     )
-    
+
     if update_response.status_code == 200:
         updated_link = (
             f"https://{envs['cloud']}.atlassian.net/wiki"
@@ -107,6 +120,9 @@ def update_confluence_page(envs, page_id, page_title, html, new_version, links):
 
 
 def create_confluence_page(envs, page_title, html, links):
+    """
+    Create a Confluence page
+    """
     url = f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages"
     content = {
         "spaceId": envs["space_id"],
@@ -136,6 +152,9 @@ def create_confluence_page(envs, page_title, html, links):
 
 
 def process_file(md_file, envs, links):
+    """
+    Process a file and ensure formatting
+    """
     new_version = None
     md_content = read_markdown_file(md_file)
     html = render_html(md_content)
@@ -168,7 +187,11 @@ def find_page_by_title(page_title, envs):
     }
     headers = {"Accept": "application/json"}
     response = requests.get(
-        url, params=params, auth=(envs["user"], envs["token"]), headers=headers, timeout=10,
+        url,
+        params=params,
+        auth=(envs["user"], envs["token"]),
+        headers=headers,
+        timeout=10,
     )
     if response.status_code == 200:
         data = response.json()
@@ -201,6 +224,7 @@ def main():
         sys.exit(1)
 
     print(links)
+
 
 if __name__ == "__main__":
     main()
