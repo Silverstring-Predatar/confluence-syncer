@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 """
-This syncs markdown files from a file or folder to Confluence as child pages.
+This syncs markdown files from a file or folder to Confluence as child pages
+of a given parent, with their docstring, HTML formatted.
+It uses v2 of the Confluence API, and can exclude files.
+If selecting a single file, it assumes the file you want to sync is in the main repo dir.
 """
 
 import os
@@ -58,18 +61,13 @@ def process_directory(envs, links):
     return links
 
 def process_file(md_file, envs, links):
-    """
-    Process a single markdown file.
-    """
     new_version = None
     try:
         with open(md_file, encoding='utf-8') as f:
             md = f.read()
 
         markdown = MarkdownIt()
-        # Render markdown files into HTML versions.
         html = markdown.render(md)
-
         page_title = os.path.splitext(os.path.basename(md_file))[0]
         page_id, current_version, existing_content = find_page_by_title(page_title, envs)
         headers = {"Content-Type": "application/json"}
@@ -78,10 +76,12 @@ def process_file(md_file, envs, links):
             new_version = current_version + 1
 
         if page_id:
-            # compare existing content with the new content
+            # Compare existing content with the new content
             if html != existing_content:
-                # content has changed, update it
-                update_url = f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages/{page_id}"
+                # Content has changed, update it
+                update_url = (
+                    f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages/{page_id}"
+                )
                 update_content = {
                     "id": page_id,
                     "status": "current",
@@ -95,6 +95,7 @@ def process_file(md_file, envs, links):
                     json=update_content,
                     auth=(envs["user"], envs["token"]),
                     headers=headers,
+                    timeout=10,
                 )
                 if update_response.status_code == 200:
                     updated_link = (
@@ -105,16 +106,14 @@ def process_file(md_file, envs, links):
                     print(f"{page_title}: Content update successful. New version: {new_version}")
                 else:
                     print(
-                        f"{page_title}: Failed to update child page. HTTP status code: {update_response.status_code}"
+                        f"{page_title}: Failed. HTTP status code: {update_response.status_code}"
                     )
             else:
-                # content is the same, no need to update
+                # Content is the same, no need to update
                 print(f"{page_title}: Identical content, no update required.")
         else:
-            # construct the Confluence Rest API URL
+            # Construct the Confluence Rest API URL
             url = f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages"
-
-            # Confluence Rest API is weird, so spaceId is a hardcoded env var, same as parent page id.
             content = {
                 "spaceId": envs["space_id"],
                 "status": "current",
@@ -124,7 +123,11 @@ def process_file(md_file, envs, links):
             }
             headers = {"Accept": "application/json", "Content-Type": "application/json"}
             response = requests.post(
-                url, json=content, auth=(envs["user"], envs["token"]), headers=headers
+                url,
+                json=content,
+                auth=(envs["user"], envs["token"]),
+                headers=headers,
+                timeout=10,
             )
 
             if response.status_code == 200:
@@ -136,13 +139,14 @@ def process_file(md_file, envs, links):
                 print(f"{page_title}: Content upload successful.")
             else:
                 print(
-                    f"{page_title}: Failed to create child page. HTTP status code: {response.status_code}"
+                    f"{page_title}: Failed. HTTP status code: {response.status_code}"
                 )
     except RequestException as e:
         print(f"An error occurred during the HTTP request: {e}")
         sys.exit(1)
 
     return links
+
 
 def find_page_by_title(page_title, envs):
     """
@@ -154,7 +158,7 @@ def find_page_by_title(page_title, envs):
     }
     headers = {"Accept": "application/json"}
     response = requests.get(
-        url, params=params, auth=(envs["user"], envs["token"]), headers=headers
+        url, params=params, auth=(envs["user"], envs["token"]), headers=headers, timeout=10,
     )
     if response.status_code == 200:
         data = response.json()
@@ -167,6 +171,9 @@ def find_page_by_title(page_title, envs):
     return None, None
 
 def main():
+    """
+    Main function that orchestrates it all
+    """
     envs = load_environment_variables()
 
     links = []
