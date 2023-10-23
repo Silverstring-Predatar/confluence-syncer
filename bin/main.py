@@ -86,6 +86,9 @@ def process_directory(envs, links):
 
 
 def update_confluence_page(envs, config, links):
+    """
+    Update a Confluence page
+    """
     update_url = f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages/{config['page_id']}"
     headers = {"Content-Type": "application/json"}
     update_content = {
@@ -103,14 +106,14 @@ def update_confluence_page(envs, config, links):
         headers=headers,
         timeout=10,
     )
-    
+
     if update_response.status_code == 200:
         updated_link = (
             f"https://{envs['cloud']}.atlassian.net/wiki"
             + update_response.json()["_links"]["webui"]
         )
         links.append(f"{config['page_title']}: {updated_link}")
-        print(f"{config['page_title']}: Content update successful. New version: {config['new_version']}")
+        print(f"{config['page_title']}: Success. New version: {config['new_version']}")
     else:
         print(f"{config['page_title']}: Failed. HTTP status code: {update_response.status_code}")
 
