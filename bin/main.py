@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 """
-This syncs markdown files from a file or folder to Confluence as child pages
-of a given parent, with their docstring, HTML formatted.
-It uses v2 of the Confluence API, and can exclude files.
-If selecting a single file, it assumes the file you want to sync is in the main repo dir.
+This syncs markdown files from a file or folder to Confluence as child pages.
 """
 
 import os
+import sys
 import requests
 from markdown_it import MarkdownIt
 from requests.exceptions import RequestException
 
-
 def load_environment_variables():
+    """
+    Load environment variables and check for required values.
+    """
     env_var_names = [
         "cloud",
         "user",
@@ -26,7 +26,7 @@ def load_environment_variables():
         envs[var_name] = os.environ.get(var_name)
         if not envs[var_name]:
             print(f"Missing value for {var_name}")
-            exit(1)
+            sys.exit(1)
 
     if "input_file" in os.environ:
         envs["input_file"] = os.environ["input_file"]
@@ -37,32 +37,33 @@ def load_environment_variables():
 
     return envs
 
-
 def process_directory(envs, links):
+    """
+    Process a directory of markdown files.
+    """
     md_directory = os.path.join(
         os.environ["GITHUB_WORKSPACE"], envs["input_md_directory"]
     )
-    if envs["exclude_files"]:
+    if envs.get("exclude_files"):
         exclude_files = envs["exclude_files"].split(",")
+    else:
+        exclude_files = []
 
     for root, _, files in os.walk(md_directory):
         for f in files:
-            if exclude_files:
-                if f.endswith(".md") and f not in exclude_files:
-                    md_file = os.path.join(root, f)
-                    links = process_file(md_file, envs, links)
-            else:
-                if f.endswith(".md"):
-                    md_file = os.path.join(root, f)
-                    links = process_file(md_file, envs, links)
+            if f.endswith(".md") and f not in exclude_files:
+                md_file = os.path.join(root, f)
+                links = process_file(md_file, envs, links)
 
     return links
 
-
 def process_file(md_file, envs, links):
+    """
+    Process a single markdown file.
+    """
     new_version = None
     try:
-        with open(md_file) as f:
+        with open(md_file, encoding='utf-8') as f:
             md = f.read()
 
         markdown = MarkdownIt()
@@ -139,13 +140,14 @@ def process_file(md_file, envs, links):
                 )
     except RequestException as e:
         print(f"An error occurred during the HTTP request: {e}")
-        exit(1)
+        sys.exit(1)
 
-    if links:
-        return links
-
+    return links
 
 def find_page_by_title(page_title, envs):
+    """
+    Find a Confluence page by title.
+    """
     url = f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages"
     params = {
         "title": page_title,
@@ -164,7 +166,6 @@ def find_page_by_title(page_title, envs):
 
     return None, None
 
-
 def main():
     envs = load_environment_variables()
 
@@ -179,10 +180,9 @@ def main():
     else:
         # Handle the case where neither are provided
         print("No specific input provided.")
-        exit(1)
+        sys.exit(1)
 
     print(links)
-
 
 if __name__ == "__main__":
     main()
