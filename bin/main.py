@@ -89,14 +89,16 @@ def update_confluence_page(envs, config, links):
     """
     Update a Confluence page
     """
-    update_url = f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages/{config['page_id']}"
+    update_url = (
+        f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages/{config['page_id']}"
+    )
     headers = {"Content-Type": "application/json"}
     update_content = {
-        "id": config['page_id'],
+        "id": config["page_id"],
         "status": "current",
-        "version": {"number": config['new_version']},
-        "title": config['page_title'],
-        "body": {"value": config['html'], "representation": "storage"},
+        "version": {"number": config["new_version"]},
+        "title": config["page_title"],
+        "body": {"value": config["html"], "representation": "storage"},
     }
 
     update_response = requests.put(
@@ -115,8 +117,9 @@ def update_confluence_page(envs, config, links):
         links.append(f"{config['page_title']}: {updated_link}")
         print(f"{config['page_title']}: Success. New version: {config['new_version']}")
     else:
-        print(f"{config['page_title']}: Failed. HTTP status code: {update_response.status_code}")
-
+        print(
+            f"{config['page_title']}: Failed. HTTP status code: {update_response.status_code}"
+        )
 
 
 def create_confluence_page(envs, page_title, html, links):
@@ -167,12 +170,16 @@ def process_file(md_file, envs, links):
     if page_id:
         # Compare existing content with the new content and update if necessary
         if html != existing_content:
-            update_confluence_page(envs, {
-                'page_id': page_id,
-                'page_title': page_title,
-                'html': html,
-                'new_version': new_version,
-            }, links)
+            update_confluence_page(
+                envs,
+                {
+                    "page_id": page_id,
+                    "page_title": page_title,
+                    "html": html,
+                    "new_version": new_version,
+                },
+                links,
+            )
         else:
             print(f"{page_title}: Identical content, no update required.")
     else:
