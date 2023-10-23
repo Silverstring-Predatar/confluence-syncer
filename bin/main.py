@@ -40,6 +40,21 @@ def load_environment_variables():
 
     return envs
 
+
+def read_markdown_file(md_file):
+    with open(md_file, encoding='utf-8') as f:
+        return f.read()
+
+
+def render_html(md_content):
+    markdown = MarkdownIt()
+    return markdown.render(md_content)
+
+
+def get_page_title(md_file):
+    return os.path.splitext(os.path.basename(md_file))[0]
+
+
 def process_directory(envs, links):
     """
     Process a directory of markdown files.
@@ -60,95 +75,85 @@ def process_directory(envs, links):
 
     return links
 
+
+def update_confluence_page(envs, page_id, page_title, html, new_version, links):
+    update_url = f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages/{page_id}"
+    headers = {"Content-Type": "application/json"}
+    update_content = {
+        "id": page_id,
+        "status": "current",
+        "version": {"number": new_version},
+        "title": page_title,
+        "body": {"value": html, "representation": "storage"},
+    }
+
+    update_response = requests.put(
+        update_url,
+        json=update_content,
+        auth=(envs["user"], envs["token"]),
+        headers=headers,
+        timeout=10,
+    )
+    
+    if update_response.status_code == 200:
+        updated_link = (
+            f"https://{envs['cloud']}.atlassian.net/wiki"
+            + update_response.json()["_links"]["webui"]
+        )
+        links.append(f"{page_title}: {updated_link}")
+        print(f"{page_title}: Content update successful. New version: {new_version}")
+    else:
+        print(f"{page_title}: Failed. HTTP status code: {update_response.status_code}")
+
+
+def create_confluence_page(envs, page_title, html, links):
+    url = f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages"
+    content = {
+        "spaceId": envs["space_id"],
+        "status": "current",
+        "title": page_title,
+        "parentId": envs["parent_page_id"],
+        "body": {"value": html, "representation": "storage"},
+    }
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    response = requests.post(
+        url,
+        json=content,
+        auth=(envs["user"], envs["token"]),
+        headers=headers,
+        timeout=10,
+    )
+
+    if response.status_code == 200:
+        link = (
+            f"https://{envs['cloud']}.atlassian.net/wiki"
+            + response.json()["_links"]["webui"]
+        )
+        links.append(f"{page_title}: {link}")
+        print(f"{page_title}: Content upload successful.")
+    else:
+        print(f"{page_title}: Failed. HTTP status code: {response.status_code}")
+
+
 def process_file(md_file, envs, links):
-    """
-    The real main function. This processes each file
-    and compares the markdown file content to 
-    existing, if any.
-    """
     new_version = None
-    try:
-        with open(md_file, encoding='utf-8') as f:
-            md = f.read()
+    md_content = read_markdown_file(md_file)
+    html = render_html(md_content)
+    page_title = get_page_title(md_file)
+    page_id, current_version, existing_content = find_page_by_title(page_title, envs)
 
-        markdown = MarkdownIt()
-        html = markdown.render(md)
-        page_title = os.path.splitext(os.path.basename(md_file))[0]
-        page_id, current_version, existing_content = find_page_by_title(page_title, envs)
-        headers = {"Content-Type": "application/json"}
+    if current_version:
+        new_version = current_version + 1
 
-        if current_version:
-            new_version = current_version + 1
-
-        if page_id:
-            # Compare existing content with the new content
-            if html != existing_content:
-                # Content has changed, update it
-                update_url = (
-                    f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages/{page_id}"
-                )
-                update_content = {
-                    "id": page_id,
-                    "status": "current",
-                    "version": {"number": new_version},
-                    "title": page_title,
-                    "body": {"value": html, "representation": "storage"},
-                }
-
-                update_response = requests.put(
-                    update_url,
-                    json=update_content,
-                    auth=(envs["user"], envs["token"]),
-                    headers=headers,
-                    timeout=10,
-                )
-                if update_response.status_code == 200:
-                    updated_link = (
-                        f"https://{envs['cloud']}.atlassian.net/wiki"
-                        + update_response.json()["_links"]["webui"]
-                    )
-                    links.append(f"{page_title}: {updated_link}")
-                    print(f"{page_title}: Content update successful. New version: {new_version}")
-                else:
-                    print(
-                        f"{page_title}: Failed. HTTP status code: {update_response.status_code}"
-                    )
-            else:
-                # Content is the same, no need to update
-                print(f"{page_title}: Identical content, no update required.")
+    if page_id:
+        # Compare existing content with the new content and update if necessary
+        if html != existing_content:
+            update_confluence_page(envs, page_id, page_title, html, new_version, links)
         else:
-            # Construct the Confluence Rest API URL
-            url = f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages"
-            content = {
-                "spaceId": envs["space_id"],
-                "status": "current",
-                "title": page_title,
-                "parentId": envs["parent_page_id"],
-                "body": {"value": html, "representation": "storage"},
-            }
-            headers = {"Accept": "application/json", "Content-Type": "application/json"}
-            response = requests.post(
-                url,
-                json=content,
-                auth=(envs["user"], envs["token"]),
-                headers=headers,
-                timeout=10,
-            )
-
-            if response.status_code == 200:
-                link = (
-                    f"https://{envs['cloud']}.atlassian.net/wiki"
-                    + response.json()["_links"]["webui"]
-                )
-                links.append(f"{page_title}: {link}")
-                print(f"{page_title}: Content upload successful.")
-            else:
-                print(
-                    f"{page_title}: Failed. HTTP status code: {response.status_code}"
-                )
-    except RequestException as e:
-        print(f"An error occurred during the HTTP request: {e}")
-        sys.exit(1)
+            print(f"{page_title}: Identical content, no update required.")
+    else:
+        # Create a new Confluence page
+        create_confluence_page(envs, page_title, html, links)
 
     return links
 
@@ -174,6 +179,7 @@ def find_page_by_title(page_title, envs):
             return page_id, version_number, existing_content
 
     return None, None
+
 
 def main():
     """
