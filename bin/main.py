@@ -75,14 +75,7 @@ def process_file(md_file, envs, links):
         html = markdown.render(md)
         page_title = os.path.splitext(os.path.basename(md_file))[0]
 
-        page_info = {
-            "page_id": None,
-            "current_version": None,
-            "existing_content": None,
-        }
         page_info = find_page_by_title(page_title, envs)
-
-        headers = {"Content-Type": "application/json"}
 
         if page_info["current_version"]:
             new_version = page_info["current_version"] + 1
@@ -102,10 +95,13 @@ def process_file(md_file, envs, links):
                     "body": {"value": html, "representation": "storage"},
                 }
 
+                headers = {"Content-Type": "application/json"}
+                auth = (envs["user"], envs["token"])
+
                 update_response = requests.put(
                     update_url,
                     json=update_content,
-                    auth=(envs["user"], envs["token"]),
+                    auth=auth,
                     headers=headers,
                     timeout=10,
                 )
@@ -118,7 +114,7 @@ def process_file(md_file, envs, links):
                     print(f"{page_title}: Content update successful. New version: {new_version}")
                 else:
                     print(
-                        f"{page_title}: Failed to update child page. HTTP status code: {update_response.status_code}"
+                        f"{page_title}: Failed. HTTP status code: {update_response.status_code}"
                     )
             else:
                 # Content is the same, no need to update
@@ -134,10 +130,12 @@ def process_file(md_file, envs, links):
                 "body": {"value": html, "representation": "storage"},
             }
             headers = {"Accept": "application/json", "Content-Type": "application/json"}
+            auth = (envs["user"], envs["token"])
+
             response = requests.post(
                 url,
                 json=content,
-                auth=(envs["user"], envs["token"]),
+                auth=auth,
                 headers=headers,
                 timeout=10,
             )
@@ -151,13 +149,14 @@ def process_file(md_file, envs, links):
                 print(f"{page_title}: Content upload successful.")
             else:
                 print(
-                    f"{page_title}: Failed to create child page. HTTP status code: {response.status_code}"
+                    f"{page_title}: Failed. HTTP status code: {response.status_code}"
                 )
     except RequestException as e:
         print(f"An error occurred during the HTTP request: {e}")
         sys.exit(1)
 
     return links
+
 
 
 
