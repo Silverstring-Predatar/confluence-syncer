@@ -60,13 +60,13 @@ def process_directory(envs, links):
 
     return links
 
+
 def process_file(md_file, envs, links):
     """
     The real main function. This processes each file
     and compares the markdown file content to 
     existing, if any.
     """
-    new_version = None
     try:
         with open(md_file, encoding='utf-8') as f:
             md = f.read()
@@ -74,21 +74,28 @@ def process_file(md_file, envs, links):
         markdown = MarkdownIt()
         html = markdown.render(md)
         page_title = os.path.splitext(os.path.basename(md_file))[0]
-        page_id, current_version, existing_content = find_page_by_title(page_title, envs)
+
+        page_info = {
+            "page_id": None,
+            "current_version": None,
+            "existing_content": None,
+        }
+        page_info = find_page_by_title(page_title, envs)
+
         headers = {"Content-Type": "application/json"}
 
-        if current_version:
-            new_version = current_version + 1
+        if page_info["current_version"]:
+            new_version = page_info["current_version"] + 1
+        else:
+            new_version = None
 
-        if page_id:
+        if page_info["page_id"]:
             # Compare existing content with the new content
-            if html != existing_content:
+            if html != page_info["existing_content"]:
                 # Content has changed, update it
-                update_url = (
-                    f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages/{page_id}"
-                )
+                update_url = f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages/{page_info['page_id']}"
                 update_content = {
-                    "id": page_id,
+                    "id": page_info["page_id"],
                     "status": "current",
                     "version": {"number": new_version},
                     "title": page_title,
@@ -111,7 +118,7 @@ def process_file(md_file, envs, links):
                     print(f"{page_title}: Content update successful. New version: {new_version}")
                 else:
                     print(
-                        f"{page_title}: Failed. HTTP status code: {update_response.status_code}"
+                        f"{page_title}: Failed to update child page. HTTP status code: {update_response.status_code}"
                     )
             else:
                 # Content is the same, no need to update
@@ -144,13 +151,14 @@ def process_file(md_file, envs, links):
                 print(f"{page_title}: Content upload successful.")
             else:
                 print(
-                    f"{page_title}: Failed. HTTP status code: {response.status_code}"
+                    f"{page_title}: Failed to create child page. HTTP status code: {response.status_code}"
                 )
     except RequestException as e:
         print(f"An error occurred during the HTTP request: {e}")
         sys.exit(1)
 
     return links
+
 
 
 def find_page_by_title(page_title, envs):
