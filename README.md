@@ -1,6 +1,6 @@
-# Confluence Markdown Sync Action
+# Sync Markdown to Confluence
 
-This Action copies the contents of a Markdown `.md` file or folder to a Confluence Cloud Page, with more features.
+This Action copies the contents of a Markdown `.md` file or folder to a Confluence cloud parent page, with more features.
 
 ## Getting Started
 
