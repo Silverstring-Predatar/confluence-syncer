@@ -61,6 +61,11 @@ def process_directory(envs, links):
     return links
 
 def process_file(md_file, envs, links):
+    """
+    The real main function. This processes each file
+    and compares the markdown file content to 
+    existing, if any.
+    """
     new_version = None
     try:
         with open(md_file, encoding='utf-8') as f:
