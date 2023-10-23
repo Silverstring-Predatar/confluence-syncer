@@ -201,9 +201,9 @@ def find_page_by_title(page_title, envs):
     if response.status_code == 200:
         data = response.json()
         if data.get("results"):
-            page_id = data["results"][0]["id"]
-            version_number = data["results"][0]["version"]["number"]
-            existing_content = data["results"][0]["body"]["storage"]
+            page_id = data["results"]["id"]
+            version_number = data["results"]["version"]["number"]
+            existing_content = data["results"]["body"]["storage"]
             return page_id, version_number, existing_content
 
     return None, None
