@@ -7,7 +7,7 @@ RUN pip install pipenv && \
   pipenv install --system --deploy && \
   pipenv --clear
 
-COPY ./src .
+COPY ./bin .
 
 ENTRYPOINT [ "python" ]
 CMD [ "/action/main.py" ]
