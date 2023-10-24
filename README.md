@@ -36,7 +36,7 @@ Uses a token for the rest api v2.
 
 - `user`: The user that generated the access token
 
-- `token`: You can generate the token [here](https://id.atlassian.com/manage-profile/security/api-tokens). Link to [Docs](https://confluence.atlassian.com/cloud/api-tokens-938839638.html)
+- `token`: the Confluence API token.
 
 *Not required*:
 
