@@ -29,5 +29,5 @@ outputs:
   links:
     description: title and link of uploaded or updated page(s)
 runs:
-  using: python311
+  using: docker
   main: bin/main.py
