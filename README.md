@@ -1,11 +1,11 @@
-# Sync Markdown to Confluence
+# Confluence Syncer
 
 This Action copies the contents of a Markdown `.md` file or folder to a Confluence cloud parent page, with more features.
 
 ## Getting Started
 
 ```yml
-      - uses: humanendpoint/confluence-sync@v1.1
+      - uses: humanendpoint/confluence-syncer@v1.1
         with:
           input_md_directory: wiki
           exclude_files: this.md,that.md
