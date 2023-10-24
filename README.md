@@ -5,7 +5,7 @@ This Action copies the contents of a Markdown `.md` file or folder to a Confluen
 ## Getting Started
 
 ```yml
-      - uses: humanendpoint/confluence-syncer@v1.2
+      - uses: humanendpoint/confluence-syncer@v1.4
         with:
           input_md_directory: wiki
           exclude_files: this.md,that.md
