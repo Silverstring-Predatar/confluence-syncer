@@ -221,7 +221,7 @@ def main():
     Main function that orchestrates it all
     """
     envs = load_environment_variables()
-
+    print(envs)
     links = []
     if "input_file" in envs:
         # Process a single file
