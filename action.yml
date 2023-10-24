@@ -1,4 +1,4 @@
-name: Sync Markdown to Confluence
+name: confluence-syncer
 description: This syncs a given directory or single file as child page(s) to a Confluence parent ID page.
 inputs:
   cloud:
