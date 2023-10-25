@@ -161,25 +161,26 @@ def process_file(md_file, envs, links):
     md_content = read_markdown_file(md_file)
     html = render_html(md_content)
     page_title = get_page_title(md_file)
-    page_id, current_version = find_page_by_title(page_title, envs)
+    page_id, current_version, page_content = find_page_by_title(page_title, envs)
 
     if current_version:
         new_version = current_version + 1
 
     if page_id:
-        update_confluence_page(
-            envs,
-            {
-                "page_id": page_id,
-                "page_title": page_title,
-                "html": html,
-                "new_version": new_version,
-            },
-            links,
-        )
-    else:
-        # Create a new Confluence page
-        create_confluence_page(envs, page_title, html, links)
+        if html != page_content:
+            update_confluence_page(
+                envs,
+                {
+                    "page_id": page_id,
+                    "page_title": page_title,
+                    "html": html,
+                    "new_version": new_version,
+                },
+                links,
+            )
+        else:
+            # Create a new Confluence page
+            create_confluence_page(envs, page_title, html, links)
 
     return links
 
