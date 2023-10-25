@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 """
-This syncs markdown files from a file or folder to Confluence as child pages
-of a given parent, with their docstring, HTML formatted.
-It uses v2 of the Confluence API, and can exclude files.
+This syncs markdown files from a file or folder to Confluence as child pages of a given parent.
+It uses v2 of the Confluence API, and can exclude files as well.
 If selecting a single file, it assumes the file you want to sync is in the main repo dir.
 """
 
@@ -162,26 +161,22 @@ def process_file(md_file, envs, links):
     md_content = read_markdown_file(md_file)
     html = render_html(md_content)
     page_title = get_page_title(md_file)
-    page_id, current_version, existing_content = find_page_by_title(page_title, envs)
+    page_id, current_version = find_page_by_title(page_title, envs)
 
     if current_version:
         new_version = current_version + 1
 
     if page_id:
-        # Compare existing content with the new content and update if necessary
-        if html != existing_content:
-            update_confluence_page(
-                envs,
-                {
-                    "page_id": page_id,
-                    "page_title": page_title,
-                    "html": html,
-                    "new_version": new_version,
-                },
-                links,
-            )
-        else:
-            print(f"{page_title}: Identical content, no update required.")
+        update_confluence_page(
+            envs,
+            {
+                "page_id": page_id,
+                "page_title": page_title,
+                "html": html,
+                "new_version": new_version,
+            },
+            links,
+        )
     else:
         # Create a new Confluence page
         create_confluence_page(envs, page_title, html, links)
@@ -208,10 +203,10 @@ def find_page_by_title(page_title, envs):
     if response.status_code == 200:
         data = response.json()
         if data.get("results"):
-            page_id = data["results"]["id"]
-            version_number = data["results"]["version"]["number"]
-            existing_content = data["results"]["body"]["storage"]
-            return page_id, version_number, existing_content
+            print(data["results"])
+            page_id = data["results"][0]["id"]
+            version_number = data["results"][0]["version"]["number"]
+            return page_id, version_number
 
     return None, None
 
