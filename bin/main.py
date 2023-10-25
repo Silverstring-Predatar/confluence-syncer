@@ -212,7 +212,10 @@ def find_page_by_title(page_title, envs):
             page_id = data["results"][0]["id"]
             version_number = data["results"][0]["version"]["number"]
 
-            page_url = f"https://{envs['cloud']}.atlassian.net/wiki/rest/api/content/{page_id}?expand=body.storage"
+            page_url = (
+                f"https://{envs['cloud']}.atlassian.net/wiki/rest/api/content/"
+                f"{page_id}?expand=body.storage"
+            )
             page_response = requests.get(
                 page_url,
                 auth=(envs["user"], envs["token"]),
