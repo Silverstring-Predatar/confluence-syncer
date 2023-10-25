@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 """
 This syncs markdown files from a file or folder to Confluence as child pages of a given parent.
-It uses v2 of the Confluence API, and can exclude files as well.
+- It uses v2 of the Confluence API
+- Can exclude files as well
+- Compares pages before updating.
 If selecting a single file, it assumes the file you want to sync is in the main repo dir.
 """
 
@@ -207,22 +209,18 @@ def find_page_by_title(page_title, envs):
     if response.status_code == 200:
         data = response.json()
         if data.get("results"):
-            print(data["results"])
             page_id = data["results"][0]["id"]
             version_number = data["results"][0]["version"]["number"]
 
-            page_url = (
-                f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages/{page_id}"
-            )
+            page_url = f"https://{envs['cloud']}.atlassian.net/wiki/rest/api/content/{page_id}?expand=body.storage"
             page_response = requests.get(
                 page_url,
-                params=params,
                 auth=(envs["user"], envs["token"]),
                 headers=headers,
                 timeout=10,
             )
             page = page_response.json()
-            page_content = page["results"][0]["body"]["storage"]["value"]
+            page_content = page["body"]["storage"]["value"]
 
             return page_id, version_number, page_content
 
