@@ -184,6 +184,7 @@ def process_file(md_file, envs, links):
     return links
 
 
+# update this to find by ID
 def find_page_by_title(page_title, envs):
     """
     Find a Confluence page by title.
@@ -206,9 +207,23 @@ def find_page_by_title(page_title, envs):
             print(data["results"])
             page_id = data["results"][0]["id"]
             version_number = data["results"][0]["version"]["number"]
-            return page_id, version_number
 
-    return None, None
+            page_url = (
+                f"https://{envs['cloud']}.atlassian.net/wiki/api/v2/pages/{page_id}"
+            )
+            page_response = requests.get(
+                page_url,
+                params=params,
+                auth=(envs["user"], envs["token"]),
+                headers=headers,
+                timeout=10,
+            )
+            page = page_response.json()
+            page_content = page["results"][0]["body"]["storage"]["value"]
+
+            return page_id, version_number, page_content
+
+    return None, None, None
 
 
 def main():
@@ -216,7 +231,6 @@ def main():
     Main function that orchestrates it all
     """
     envs = load_environment_variables()
-    print(envs)
     links = []
     if "input_file" in envs:
         # Process a single file
