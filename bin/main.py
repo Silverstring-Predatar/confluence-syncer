@@ -179,8 +179,10 @@ def process_file(md_file, envs, links):
                 links,
             )
         else:
-            # Create a new Confluence page
-            create_confluence_page(envs, page_title, html, links)
+            print(f"{page_title}: Identical content, no update required.")
+    else:
+        # Create a new Confluence page
+        create_confluence_page(envs, page_title, html, links)
 
     return links
 
