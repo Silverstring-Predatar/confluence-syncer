@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 """
 This syncs markdown files from a file or folder to Confluence as child pages of a given parent.
-- It uses v2 of the Confluence API
+
+Features:
 - Can exclude files as well
-- Compares pages before updating.
-If selecting a single file, it assumes the file you want to sync is in the main repo dir.
+- Compares pages before updating
+
+If selecting a single file, it assumes the file you want to sync is located in the main repo dir,
+but the path is editable, currently in the GitHub Action or your favorite python environment.
 """
 
+import difflib
 import os
 import sys
 import requests
@@ -169,7 +173,13 @@ def process_file(md_file, envs, links):
         new_version = current_version + 1
 
     if page_id:
-        if html != page_content:
+        adjusted_html = html.strip()
+        adjusted_page = page_content.strip()
+        differ = difflib.Differ()
+        diff = list(differ.compare(adjusted_html, adjusted_page))
+
+        # Check if there are substantial differences
+        if any(line.startswith("+ ") or line.startswith("- ") for line in diff):
             update_confluence_page(
                 envs,
                 {
@@ -183,7 +193,6 @@ def process_file(md_file, envs, links):
         else:
             print(f"{page_title}: Identical content, no update required.")
     else:
-        # Create a new Confluence page
         create_confluence_page(envs, page_title, html, links)
 
     return links
