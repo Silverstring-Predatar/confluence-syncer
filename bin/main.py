@@ -21,27 +21,23 @@ def load_environment_variables():
     """
     Load environment variables and check for required values.
     """
-    env_var_names = [
-        "cloud",
-        "user",
-        "token",
-        "parent_page_id",
-        "space_id",
-    ]
+    env_var_names = {
+        "cloud": "INPUT_CLOUD",
+        "user": "INPUT_USER",
+        "token": "INPUT_TOKEN",
+        "parent_page_id": "INPUT_PARENT_PAGE_ID",
+        "space_id": "INPUT_SPACE_ID",
+        "input_file": "INPUT_INPUT_FILE",
+        "input_md_directory": "INPUT_INPUT_MD_DIRECTORY",
+        "exclude_files": "INPUT_EXCLUDE_FILES"
+    }
 
     envs = {}
-    for var_name in env_var_names:
-        envs[var_name] = os.environ.get(var_name)
-        if not envs[var_name]:
+    for var_name, input_name in env_var_names.items():
+        envs[var_name] = os.environ.get(input_name)
+        if not envs[var_name] and var_name not in ["input_file", "input_md_directory", "exclude_files"]:
             print(f"Missing value for {var_name}")
             sys.exit(1)
-
-    if "input_file" in os.environ:
-        envs["input_file"] = os.environ["input_file"]
-    if "input_md_directory" in os.environ:
-        envs["input_md_directory"] = os.environ["input_md_directory"]
-    if "exclude_files" in os.environ:
-        envs["exclude_files"] = os.environ["exclude_files"]
 
     return envs
 
