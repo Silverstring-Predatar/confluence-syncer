@@ -35,7 +35,12 @@ def load_environment_variables():
     envs = {}
     for var_name, input_name in env_var_names.items():
         envs[var_name] = os.environ.get(input_name)
-        if not envs[var_name] and var_name not in ["input_file", "input_md_directory", "exclude_files"]:
+        print(f"{var_name}")
+        if not envs[var_name] and var_name not in [
+            "input_file", 
+            "input_md_directory", 
+            "exclude_files"
+        ]:
             print(f"Missing value for {var_name}")
             sys.exit(1)
 
@@ -240,6 +245,7 @@ def main():
     Main function that orchestrates it all
     """
     envs = load_environment_variables()
+    print(envs)
     links = []
     if "input_file" in envs:
         # Process a single file
