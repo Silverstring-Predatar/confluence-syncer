@@ -240,20 +240,14 @@ def find_page_by_title(page_title, envs):
 
 
 def main():
-    """
-    Main function that orchestrates it all
-    """
     envs = load_environment_variables()
     links = []
-    if "input_file" in envs:
-        # Process a single file
+    if envs.get("input_file"):
         single_file = os.path.join(os.environ["GITHUB_WORKSPACE"], envs["input_file"])
         links = process_file(single_file, envs, links)
-    elif "input_md_directory" in envs:
-        # Process a directory of markdown files
+    elif envs.get("input_md_directory"):
         links = process_directory(envs, links)
     else:
-        # Handle the case where neither are provided
         print("No specific input provided.")
         sys.exit(1)
 
